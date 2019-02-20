@@ -14,49 +14,43 @@
 
 /* Construct an expression trees for both aggregated and none aggregated expressions. */
 static void _build_expressions(Aggregate *op) {
-    ExpandCollapsedNodes(op->ast);
     ResultSet_CreateHeader(op->resultset);
 
-    AST_ReturnNode *return_node = op->ast->returnNode;
-    uint expCount = array_len(return_node->returnElements);
+    NEWAST *ast = op->ast;
+    uint expCount = array_len(op->ast->return_expressions);
     
     op->none_aggregated_expressions = array_new(AR_ExpNode*, 1);
     op->expression_classification = rm_malloc(sizeof(uint8_t) * expCount);
 
     // Compose RETURN clause expressions.
     for(uint i = 0; i < expCount; i++) {
-        AST_ReturnElementNode *returnElement = return_node->returnElements[i];
+        AST_Entity *elem = ast->return_expressions[i];
         
-        AR_ExpNode *exp = AR_EXP_BuildFromAST(op->ast, returnElement->exp);
-        if(!AR_EXP_ContainsAggregation(exp, NULL)) {
+        if(!AR_EXP_ContainsAggregation(elem->exp, NULL)) {
             op->expression_classification[i] = 0;
-            op->none_aggregated_expressions = array_append(op->none_aggregated_expressions, exp);
+            op->none_aggregated_expressions = array_append(op->none_aggregated_expressions, elem->exp);
         } else {
             op->expression_classification[i] = 1;
-            AR_EXP_Free(exp);
         }
     }
 
     // ORDER-BY expressions.
-    AST_OrderNode *order_node = op->ast->orderNode;
-    if(order_node) {
-        expCount = array_len(order_node->expressions);
+    expCount = ast->order_expression_count;
+    if(expCount > 0) {
         op->order_expressions = rm_malloc(sizeof(AR_ExpNode*) * expCount);
         for(uint i = 0; i < expCount; i++) {
-            op->order_expressions[i] = AR_EXP_BuildFromAST(op->ast, order_node->expressions[i]);
+            op->order_expressions[i] = ast->order_expressions[i];
         }
     }
 }
 
 static AR_ExpNode** _build_aggregated_expressions(Aggregate *op) {
-    AST_ReturnNode *return_node = op->ast->returnNode;
     AR_ExpNode **agg_exps = array_new(AR_ExpNode*, 1);
-    uint exp_count = array_len(return_node->returnElements);
+    uint exp_count = array_len(op->ast->return_expressions);
 
     for(uint i = 0; i < exp_count; i++) {
         if(!op->expression_classification[i]) continue;
-        AST_ReturnElementNode *returnElement = return_node->returnElements[i];
-        AR_ExpNode *exp = AR_EXP_BuildFromAST(op->ast, returnElement->exp);
+        AR_ExpNode *exp = op->ast->return_expressions[i]->exp;
         agg_exps = array_append(agg_exps, exp);
     }
 
@@ -182,11 +176,12 @@ static Record _handoff(Aggregate *op) {
         if(op->ast->order_expression_count > 0) {
             // If expression is aliased, introduce it to group record
             // for later evaluation by ORDER-BY expressions.
-            char *alias = op->ast->returnNode->returnElements[i]->alias;
-            if(alias) {
-                int recIdx = AST_GetAliasID(op->ast, alias);
-                Record_AddScalar(group->r, recIdx, res);
-            }
+            // TODO aliases
+            // char *alias = op->ast->returnNode->returnElements[i]->alias;
+            // if(alias) {
+                // int recIdx = AST_GetAliasID(op->ast, alias);
+                // Record_AddScalar(group->r, recIdx, res);
+            // }
         }
     }
 

@@ -21,16 +21,16 @@ static void _buildExpressions(Project *op) {
     
     op->expressions = rm_malloc((op->orderByExpCount + op->returnExpCount) * sizeof(AR_ExpNode*));
 
+    // TODO redundancy; already performed by ResultSet header creation
     // Compose RETURN clause expressions.
-    for(uint i = 0; i < returnExpCount; i++) {
-        AST_ArithmeticExpressionNode *exp = ast->returnNode->returnElements[i]->exp;
-        op->expressions = array_append(op->expressions, AR_EXP_BuildFromAST(ast, exp));
+    for(uint i = 0; i < op->returnExpCount; i++) {
+        // TODO weird?
+        op->expressions[i] = ast->return_expressions[i]->exp;
     }
 
     // Compose ORDER BY expressions.
-    for(uint i = 0; i < orderByExpCount; i++) {
-        AST_ArithmeticExpressionNode *exp = ast->orderNode->expressions[i];
-        op->expressions = array_append(op->expressions, AR_EXP_BuildFromAST(ast, exp));
+    for(uint i = 0; i < op->orderByExpCount; i++) {
+        op->expressions[i + op->returnExpCount] = ast->order_expressions[i];
     }
 }
 

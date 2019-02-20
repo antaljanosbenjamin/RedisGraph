@@ -15,7 +15,7 @@ static void _setupTraversedRelations(CondTraverse *op) {
     GraphContext *gc = GraphContext_GetFromLTS();
     char *alias = op->algebraic_expression->edge->alias;
     unsigned int id = NEWAST_GetAliasID(ast, alias);
-    NEWAST_GraphEntity *e = NEWAST_GetEntity(ast, id);
+    NEWAST_GraphEntity *e = NEWAST_GetEntity(ast, id)->ge;
     op->edgeRelationCount = cypher_ast_rel_pattern_nreltypes(e->ast_ref);
     if(op->edgeRelationCount > 0) {
         op->edgeRelationTypes = array_new(int , op->edgeRelationCount);
@@ -68,7 +68,9 @@ void _traverse(CondTraverse *op) {
 
 // Determin the maximum number of records
 // which will be considered when evaluating an algebraic expression.
-static int _determinRecordCap(const AST *ast) {
+static int _determinRecordCap(const NEWAST *UNUSEDast) {
+    // TODO update
+    AST *ast = AST_GetFromLTS();
     int recordsCap = 16;    // Default.
     if(ast->limitNode) recordsCap = MIN(recordsCap, ast->limitNode->limit);
     return recordsCap;
