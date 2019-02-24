@@ -915,10 +915,10 @@ void _validate(AR_ExpNode *root, AR_EXP_ValidationResult* error) {
     if (root->type == AR_EXP_OPERAND) {
         return;
     }
-    for(int child_idx = 0; child_idx < root->op.child_count && AR_ERR_VALID(*error); child_idx++) {
+    for(int child_idx = 0; child_idx < root->op.child_count && AR_ERR_IS_VALID(*error); child_idx++) {
         _validate(root->op.children[child_idx], error);
     }
-    if (AR_ERR_VALID(*error) && root->op.type == AR_OP_FUNC) {
+    if (AR_ERR_IS_VALID(*error) && root->op.type == AR_OP_FUNC) {
         int param_count;
         int *param_types = AR_GetParamTypes(root->op.func_name, &param_count);
         assert(param_types != NULL);

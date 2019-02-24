@@ -80,6 +80,7 @@ int* AR_GetParamTypes(char *func_name, int* param_count);  /* Get the union (bin
 
 typedef struct {
     AR_Func func;
+    /* -1 means the function can have arbitrary number of parameters. In that case, the param_types contains only one type. */
     int param_count;
     int *param_types;
     int result_type;
@@ -182,7 +183,7 @@ typedef struct {
     AR_ERRType error_type;
 } AR_EXP_ValidationResult;
 
-#define AR_ERR_VALID(err) ((err).error_type == AR_ERR_NO_ERROR)
+#define AR_ERR_IS_VALID(err) ((err).error_type == AR_ERR_NO_ERROR)
 
 AR_EXP_ValidationResult AR_EXP_Validate(AR_ExpNode *root);
 
