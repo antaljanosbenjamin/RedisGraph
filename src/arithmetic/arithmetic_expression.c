@@ -689,28 +689,52 @@ void AR_RegFunc(char *func_name, size_t func_name_len, AR_FuncData* func_data) {
     TrieMap_Add(__aeRegisteredFuncs, func_name, func_name_len, func_data, NULL);
 }
 
-AR_Func AR_GetFunc(char *func_name) {
+AR_FuncData* _getFuncData(const char *func_name) {
     char lower_func_name[32] = {0};
     size_t lower_func_name_len = 32;
     _toLower(func_name, &lower_func_name[0], &lower_func_name_len);
     AR_FuncData *func_data = (AR_FuncData*) TrieMap_Find(__aeRegisteredFuncs, lower_func_name, lower_func_name_len);
     if(func_data != TRIEMAP_NOTFOUND) {
+        return func_data;
+    }
+    return NULL;
+}
+
+AR_Func AR_GetFunc(char *func_name) {
+    AR_FuncData *func_data = _getFuncData(func_name);
+    if (func_data != NULL) {
         return func_data->func;
     }
     return NULL;
 }
 
 bool AR_FuncExists(const char *func_name) {
-    char lower_func_name[32] = {0};
-    size_t lower_func_name_len = 32;
-    _toLower(func_name, &lower_func_name[0], &lower_func_name_len);
-    void *f = TrieMap_Find(__aeRegisteredFuncs, lower_func_name, lower_func_name_len);
-    return (f != TRIEMAP_NOTFOUND);
+    AR_FuncData *func_data = _getFuncData(func_name);
+    return (func_data != NULL);
+}
+
+int AR_GetResultType(char *func_name) {
+    AR_FuncData *func_data = _getFuncData(func_name);
+    if (func_data != NULL) {
+        return func_data->result_type;
+    }
+    return -1;
+}
+
+int* AR_GetParamTypes(char *func_name, int* param_count) {
+    AR_FuncData *func_data = _getFuncData(func_name);
+    if (func_data != NULL) {
+        *param_count = func_data->param_count;
+        return func_data->param_types;
+    }
+    *param_count = 0;
+    return NULL;
 }
 
 AR_FuncData *_newFuncData(AR_Func func, int param_count, int result_type) {
     AR_FuncData *data = malloc(sizeof(AR_FuncData));
     data->func = func;
+    data->param_count = param_count;
     if (param_count == -1){
         data->param_types = malloc(sizeof(int));
     } else {
@@ -869,4 +893,70 @@ void AR_RegisterFuncs() {
     _toLower("type", &lower_func_name[0], &lower_func_name_len);
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
+}
+
+int AR_EXP_GetResultType(AR_ExpNode *root) {
+    if (root->type == AR_EXP_OP) {
+        if (root->op.type == AR_OP_FUNC) {
+            return AR_GetResultType(root->op.func_name);
+        } else {
+            return Agg_GetResultType(root->op.func_name);
+        }
+    } else {
+        if (root->operand.type == AR_EXP_VARIADIC) {
+            return SI_ANY_TYPE;
+        } else {
+            return SI_TYPE(root->operand.constant);
+        }
+    }
+}
+
+bool _validate(AR_ExpNode *root, bool* success) {
+    if (!*success){
+        return false;
+    }
+    if (root->type == AR_EXP_OP) {
+        for(int child_idx = 0; child_idx < root->op.child_count; child_idx++) {
+            _validate(root->op.children[child_idx], success);
+        }
+        if (*success && root->op.type == AR_OP_FUNC) {
+            int param_count;
+            int *param_types = AR_GetParamTypes(root->op.func_name, &param_count);
+            if (param_types == NULL) {
+                *success = false;
+                return false;
+            }
+            if (param_count == -1){
+                int child_type;
+                for(int child_idx = 0; child_idx < root->op.child_count; child_idx++) {
+                    child_type = AR_EXP_GetResultType(root->op.children[child_idx]);
+                    if (!(child_type & param_types[0])) {
+                        *success = false;
+                        return false;
+                    }
+                }
+            } else {
+                if (param_count != root->op.child_count) {
+                    *success = false;
+                    return false;
+                }
+                int child_type;
+                for(int child_idx = 0; child_idx < root->op.child_count; child_idx++) {
+                    child_type = AR_EXP_GetResultType(root->op.children[child_idx]);
+                    if (!(child_type & param_types[child_idx])) {
+                        *success = false;
+                        return false;
+                    }
+                }
+            }
+        }        
+    } else {
+        return true;
+    }
+    return *success;
+}
+
+bool AR_EXP_Validate(AR_ExpNode *root) {
+    bool success = true;
+    return _validate(root, &success);
 }

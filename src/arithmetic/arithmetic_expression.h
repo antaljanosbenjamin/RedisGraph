@@ -72,11 +72,11 @@ SIValue AR_ID(SIValue *argv, int argc);        /* returns the id of a relationsh
 SIValue AR_LABELS(SIValue *argv, int argc);    /* returns a string representations the label of a node. */
 SIValue AR_TYPE(SIValue *argv, int argc);      /* returns a string representation of the type of a relation. */
 
-void AR_RegisterFuncs();                       /* Registers all arithmetic functions. */
-AR_Func AR_GetFunc(char *func_name);           /* Get arithmetic function. */
-bool AR_FuncExists(const char *func_name);     /* Check to see if function exists. */
-int AR_GetResultTypes(char *func_name);        /* Get the union (binary and) of the result type of an aritmetic function. */
-int AR_GetParamTypes(char *func_name);         /* Get the union (binary and) of valid parameter types. */
+void AR_RegisterFuncs();                                   /* Registers all arithmetic functions. */
+AR_Func AR_GetFunc(char *func_name);                       /* Get arithmetic function. */
+bool AR_FuncExists(const char *func_name);                 /* Check to see if function exists. */
+int AR_GetResultType(char *func_name);                     /* Get the union (binary and) of valid return types. */
+int* AR_GetParamTypes(char *func_name, int* param_count);  /* Get the union (binary and) of valid parameter types. */
 
 typedef struct {
     AR_Func func;
@@ -155,5 +155,8 @@ AR_ExpNode* AR_EXP_BuildFromAST(const AST *ast, const AST_ArithmeticExpressionNo
 
 /* Free arithmetic expression tree. */
 void AR_EXP_Free(AR_ExpNode *root);
+
+int AR_EXP_GetResultType(AR_ExpNode *node);
+bool AR_EXP_Validate(AR_ExpNode *root);
 
 #endif
