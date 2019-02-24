@@ -704,3 +704,85 @@ TEST_F(ArithmeticTest, ToStringTest) {
   AR_EXP_Free(arExp);
   ASSERT_EQ(result.type, T_NULL);
 }
+
+TEST_F(ArithmeticTest, ValidationTest) {
+  SIValue result;
+  const char *query;
+  AR_ExpNode *arExp;
+  Record r = Record_New(0);
+  AR_EXP_ValidationResult valResult;
+  
+  query = "RETURN 2 + 2";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_TRUE(AR_ERR_IS_VALID(valResult));
+  result = AR_EXP_Evaluate(arExp, r);
+  AR_EXP_Free(arExp);
+  ASSERT_EQ(result.longval, 4);
+  
+  query = "RETURN 'a' + 2";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_TRUE(AR_ERR_IS_VALID(valResult));
+  result = AR_EXP_Evaluate(arExp, r);
+  AR_EXP_Free(arExp);
+  ASSERT_STREQ(result.stringval, "a2");
+  
+  query = "RETURN 'a' + 2 + 3 + 'b'";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_TRUE(AR_ERR_IS_VALID(valResult));
+  result = AR_EXP_Evaluate(arExp, r);
+  AR_EXP_Free(arExp);
+  ASSERT_STREQ(result.stringval, "a23b");
+  
+  query = "RETURN ABS(MAX('a' + 2 * 3))";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_TRUE(AR_ERR_IS_VALID(valResult));
+  AR_EXP_Free(arExp);
+  
+  query = "RETURN ABS(TOUPPER('text'))";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
+  ASSERT_EQ(valResult.error_type, AR_ERR_TYPE_MISMATCH);
+  AR_EXP_Free(arExp);
+  
+  query = "RETURN FLOOR(5.1)";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_TRUE(AR_ERR_IS_VALID(valResult));
+  result = AR_EXP_Evaluate(arExp, r);
+  AR_EXP_Free(arExp);
+  ASSERT_EQ(result.doubleval, 5.0);
+
+  query = "RETURN FLOOR(5, 6)";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
+  ASSERT_EQ(valResult.error_type, AR_ERR_CARDINALITY);
+  AR_EXP_Free(arExp);
+  
+  query = "RETURN LEFT('alma', 2)";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_TRUE(AR_ERR_IS_VALID(valResult));
+  result = AR_EXP_Evaluate(arExp, r);
+  AR_EXP_Free(arExp);
+  ASSERT_STREQ(result.stringval, "al");
+
+  query = "RETURN LEFT(2, 'alma')";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
+  ASSERT_EQ(valResult.error_type, AR_ERR_TYPE_MISMATCH);
+  AR_EXP_Free(arExp);
+  
+  query = "RETURN LEFT('alma', 2, 0)";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
+  ASSERT_EQ(valResult.error_type, AR_ERR_CARDINALITY);
+  AR_EXP_Free(arExp);
+}
