@@ -747,6 +747,9 @@ TEST_F(ArithmeticTest, ValidationTest) {
   valResult = AR_EXP_Validate(arExp);
   ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
   ASSERT_EQ(valResult.error_type, AR_ERR_TYPE_MISMATCH);
+  ASSERT_EQ(valResult.type_mismatch.erroneous_child_idx, 0);
+  ASSERT_EQ(valResult.type_mismatch.possible_types, SI_NUMERIC);
+  ASSERT_EQ(valResult.type_mismatch.actual_types, SI_STRING);
   AR_EXP_Free(arExp);
   
   query = "RETURN FLOOR(5.1)";
@@ -762,6 +765,17 @@ TEST_F(ArithmeticTest, ValidationTest) {
   valResult = AR_EXP_Validate(arExp);
   ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
   ASSERT_EQ(valResult.error_type, AR_ERR_CARDINALITY);
+  ASSERT_EQ(valResult.cardinality.expected_param_count, 1);
+  ASSERT_EQ(valResult.cardinality.actual_param_count, 2);
+  AR_EXP_Free(arExp);
+
+  query = "RETURN RAND(3)";
+  arExp = _exp_from_query(query);
+  valResult = AR_EXP_Validate(arExp);
+  ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
+  ASSERT_EQ(valResult.error_type, AR_ERR_CARDINALITY);
+  ASSERT_EQ(valResult.cardinality.expected_param_count, 0);
+  ASSERT_EQ(valResult.cardinality.actual_param_count, 1);
   AR_EXP_Free(arExp);
   
   query = "RETURN LEFT('alma', 2)";
@@ -777,6 +791,9 @@ TEST_F(ArithmeticTest, ValidationTest) {
   valResult = AR_EXP_Validate(arExp);
   ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
   ASSERT_EQ(valResult.error_type, AR_ERR_TYPE_MISMATCH);
+  ASSERT_EQ(valResult.type_mismatch.erroneous_child_idx, 0);
+  ASSERT_EQ(valResult.type_mismatch.possible_types, SI_STRING);
+  ASSERT_EQ(valResult.type_mismatch.actual_types, T_INT64);
   AR_EXP_Free(arExp);
   
   query = "RETURN LEFT('alma', 2, 0)";
@@ -784,5 +801,7 @@ TEST_F(ArithmeticTest, ValidationTest) {
   valResult = AR_EXP_Validate(arExp);
   ASSERT_FALSE(AR_ERR_IS_VALID(valResult));
   ASSERT_EQ(valResult.error_type, AR_ERR_CARDINALITY);
+  ASSERT_EQ(valResult.cardinality.expected_param_count, 2);
+  ASSERT_EQ(valResult.cardinality.actual_param_count, 3);
   AR_EXP_Free(arExp);
 }
