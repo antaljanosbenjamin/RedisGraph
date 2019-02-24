@@ -75,9 +75,18 @@ SIValue AR_TYPE(SIValue *argv, int argc);      /* returns a string representatio
 void AR_RegisterFuncs();                       /* Registers all arithmetic functions. */
 AR_Func AR_GetFunc(char *func_name);           /* Get arithmetic function. */
 bool AR_FuncExists(const char *func_name);     /* Check to see if function exists. */
+int AR_GetResultTypes(char *func_name);        /* Get the union (binary and) of the result type of an aritmetic function. */
+int AR_GetParamTypes(char *func_name);         /* Get the union (binary and) of valid parameter types. */
+
+typedef struct {
+    AR_Func func;
+    int param_count;
+    int *param_types;
+    int result_type;
+} AR_FuncData;
 
 /* Register an arithmetic function. */
-void AR_RegFunc(char *func_name, size_t func_name_len, AR_Func func);
+void AR_RegFunc(char *func_name, size_t func_name_len, AR_FuncData* func_data);
 
 /* Op represents an operation applied to child args. */
 typedef struct {

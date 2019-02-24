@@ -681,21 +681,21 @@ SIValue AR_TYPE(SIValue *argv, int argc) {
     return SI_ConstStringVal(type);
 }
 
-void AR_RegFunc(char *func_name, size_t func_name_len, AR_Func func) {
+void AR_RegFunc(char *func_name, size_t func_name_len, AR_FuncData* func_data) {
     if (__aeRegisteredFuncs == NULL) {
         __aeRegisteredFuncs = NewTrieMap();
     }
     
-    TrieMap_Add(__aeRegisteredFuncs, func_name, func_name_len, func, NULL);
+    TrieMap_Add(__aeRegisteredFuncs, func_name, func_name_len, func_data, NULL);
 }
 
 AR_Func AR_GetFunc(char *func_name) {
     char lower_func_name[32] = {0};
     size_t lower_func_name_len = 32;
     _toLower(func_name, &lower_func_name[0], &lower_func_name_len);
-    void *f = TrieMap_Find(__aeRegisteredFuncs, lower_func_name, lower_func_name_len);
-    if(f != TRIEMAP_NOTFOUND) {
-        return f;
+    AR_FuncData *func_data = (AR_FuncData*) TrieMap_Find(__aeRegisteredFuncs, lower_func_name, lower_func_name_len);
+    if(func_data != TRIEMAP_NOTFOUND) {
+        return func_data->func;
     }
     return NULL;
 }
@@ -708,101 +708,167 @@ bool AR_FuncExists(const char *func_name) {
     return (f != TRIEMAP_NOTFOUND);
 }
 
+AR_FuncData *_newFuncData(AR_Func func, int param_count, int result_type) {
+    AR_FuncData *data = malloc(sizeof(AR_FuncData));
+    data->func = func;
+    if (param_count == -1){
+        data->param_types = malloc(sizeof(int));
+    } else {
+        assert(param_count >= 0);
+        data->param_types = malloc(sizeof(int) * param_count);
+    }
+    data->result_type = result_type;
+    
+    return data;
+}
+
 void AR_RegisterFuncs() {
     char lower_func_name[32] = {0};
     size_t lower_func_name_len = 32;
+    AR_FuncData *func_data;
 
+    func_data = _newFuncData(AR_ADD, -1, SI_NUMERIC_OR_STRING);
+    func_data->param_types[0] = SI_NUMERIC_OR_STRING;
     _toLower("add", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_ADD);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_SUB, -1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("sub", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_SUB);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_MUL, -1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("mul", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_MUL);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+
+    func_data = _newFuncData(AR_DIV, -1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("div", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_DIV);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_ABS, 1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("abs", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_ABS);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_CEIL, 1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("ceil", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_CEIL);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_FLOOR, 1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("floor", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_FLOOR);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_RAND, 0, T_NULL);
+    func_data->param_types[0] = SI_NUMERIC;
     _toLower("rand", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_RAND);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_ROUND, 1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;    
     _toLower("round", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_ROUND);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_SIGN, 1, SI_NUMERIC);
+    func_data->param_types[0] = SI_NUMERIC;    
     _toLower("sign", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_SIGN);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
 
     /* String operations. */
+    func_data = _newFuncData(AR_LEFT, 2, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
+    func_data->param_types[1] = T_INT64;
     _toLower("left", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_LEFT);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_REVERSE, 1, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
     _toLower("reverse", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_REVERSE);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_RIGHT, 2, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
+    func_data->param_types[1] = T_INT64;
     _toLower("right", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_RIGHT);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_LTRIM, 1, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
     _toLower("ltrim", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_LTRIM);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_RTRIM, 1, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
     _toLower("rtrim", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_RTRIM);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_SUBSTRING, 3, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
+    func_data->param_types[1] = SI_NUMERIC;
+    func_data->param_types[2] = SI_NUMERIC;
     _toLower("substring", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_SUBSTRING);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_TOLOWER, 1, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
     _toLower("tolower", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_TOLOWER);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_TOUPPER, 1, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
     _toLower("toupper", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_TOUPPER);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_TOSTRING, 1, SI_STRING);
+    func_data->param_types[0] = T_NULL;
     _toLower("tostring", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_TOSTRING);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_TRIM, 1, SI_STRING);
+    func_data->param_types[0] = SI_STRING;
     _toLower("trim", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_TRIM);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_ID, 1, SI_STRING);
+    func_data->param_types[0] = T_NULL;
     _toLower("id", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_ID);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_LABELS, 1, SI_STRING);
+    func_data->param_types[0] = T_NULL;
     _toLower("labels", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_LABELS);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
+    func_data = _newFuncData(AR_TYPE, 1, SI_STRING);
+    func_data->param_types[0] = T_NULL;
     _toLower("type", &lower_func_name[0], &lower_func_name_len);
-    AR_RegFunc(lower_func_name, lower_func_name_len, AR_TYPE);
+    AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 }
