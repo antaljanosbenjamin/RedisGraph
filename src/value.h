@@ -32,6 +32,7 @@ typedef enum {
 #define SI_STRING (T_STRING | T_CONSTSTRING)
 #define SI_NUMERIC (T_INT64 | T_DOUBLE)
 #define SI_NUMERIC_OR_STRING (T_INT64 | T_DOUBLE | T_STRING | T_CONSTSTRING)
+#define SI_ANY_TYPE (T_NULL | T_STRING | T_BOOL | T_DOUBLE | T_PTR | T_CONSTSTRING)
 #define SI_TYPE(value) (value).type
 
 /* Retrieve the numeric associated with an SIValue without explicitly

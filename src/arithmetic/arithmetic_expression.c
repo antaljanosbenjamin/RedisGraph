@@ -745,7 +745,6 @@ void AR_RegisterFuncs() {
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
-
     func_data = _newFuncData(AR_DIV, -1, SI_NUMERIC);
     func_data->param_types[0] = SI_NUMERIC;
     _toLower("div", &lower_func_name[0], &lower_func_name_len);
@@ -770,8 +769,7 @@ void AR_RegisterFuncs() {
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
-    func_data = _newFuncData(AR_RAND, 0, T_NULL);
-    func_data->param_types[0] = SI_NUMERIC;
+    func_data = _newFuncData(AR_RAND, 0, T_DOUBLE);
     _toLower("rand", &lower_func_name[0], &lower_func_name_len);
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
@@ -843,7 +841,7 @@ void AR_RegisterFuncs() {
     lower_func_name_len = 32;
 
     func_data = _newFuncData(AR_TOSTRING, 1, SI_STRING);
-    func_data->param_types[0] = T_NULL;
+    func_data->param_types[0] = SI_ANY_TYPE;
     _toLower("tostring", &lower_func_name[0], &lower_func_name_len);
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
@@ -855,19 +853,19 @@ void AR_RegisterFuncs() {
     lower_func_name_len = 32;
 
     func_data = _newFuncData(AR_ID, 1, SI_STRING);
-    func_data->param_types[0] = T_NULL;
+    func_data->param_types[0] = T_PTR;
     _toLower("id", &lower_func_name[0], &lower_func_name_len);
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
     func_data = _newFuncData(AR_LABELS, 1, SI_STRING);
-    func_data->param_types[0] = T_NULL;
+    func_data->param_types[0] = T_PTR;
     _toLower("labels", &lower_func_name[0], &lower_func_name_len);
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
 
     func_data = _newFuncData(AR_TYPE, 1, SI_STRING);
-    func_data->param_types[0] = T_NULL;
+    func_data->param_types[0] = T_PTR;
     _toLower("type", &lower_func_name[0], &lower_func_name_len);
     AR_RegFunc(lower_func_name, lower_func_name_len, func_data);
     lower_func_name_len = 32;
