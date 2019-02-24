@@ -911,52 +911,54 @@ int AR_EXP_GetResultType(AR_ExpNode *root) {
     }
 }
 
-bool _validate(AR_ExpNode *root, bool* success) {
-    if (!*success){
-        return false;
+void _validate(AR_ExpNode *root, AR_EXP_ValidationResult* error) {
+    if (root->type == AR_EXP_OPERAND) {
+        return;
     }
-    if (root->type == AR_EXP_OP) {
-        for(int child_idx = 0; child_idx < root->op.child_count; child_idx++) {
-            _validate(root->op.children[child_idx], success);
+    for(int child_idx = 0; child_idx < root->op.child_count && AR_ERR_VALID(*error); child_idx++) {
+        _validate(root->op.children[child_idx], error);
+    }
+    if (AR_ERR_VALID(*error) && root->op.type == AR_OP_FUNC) {
+        int param_count;
+        int *param_types = AR_GetParamTypes(root->op.func_name, &param_count);
+        assert(param_types != NULL);
+        if (param_count == -1) {
+            int child_type;
+            for(size_t child_idx = 0; child_idx < root->op.child_count; child_idx++) {
+                child_type = AR_EXP_GetResultType(root->op.children[child_idx]);
+                if (!(child_type & param_types[0])) {
+                    error->error_type = AR_ERR_TYPE_MISMATCH;
+                    error->type_mismatch.erroneous_child_idx = child_idx;
+                    error->type_mismatch.possible_types = param_types[0];
+                    error->type_mismatch.actual_types = child_type;
+                    return;
+                }
+            }
+        } else {
+            if (param_count != root->op.child_count) {
+                error->error_type = AR_ERR_CARDINALITY;
+                error->cardinality.expected_param_count = param_count;
+                error->cardinality.actual_param_count = root->op.child_count;
+                return;
+            }
+            int child_type;
+            for(size_t child_idx = 0; child_idx < root->op.child_count; child_idx++) {
+                child_type = AR_EXP_GetResultType(root->op.children[child_idx]);
+                if (!(child_type & param_types[child_idx])) {
+                    error->error_type = AR_ERR_TYPE_MISMATCH;
+                    error->type_mismatch.erroneous_child_idx = child_idx;
+                    error->type_mismatch.possible_types = param_types[child_idx];
+                    error->type_mismatch.actual_types = child_type;
+                    return;
+                }
+            }
         }
-        if (*success && root->op.type == AR_OP_FUNC) {
-            int param_count;
-            int *param_types = AR_GetParamTypes(root->op.func_name, &param_count);
-            if (param_types == NULL) {
-                *success = false;
-                return false;
-            }
-            if (param_count == -1){
-                int child_type;
-                for(int child_idx = 0; child_idx < root->op.child_count; child_idx++) {
-                    child_type = AR_EXP_GetResultType(root->op.children[child_idx]);
-                    if (!(child_type & param_types[0])) {
-                        *success = false;
-                        return false;
-                    }
-                }
-            } else {
-                if (param_count != root->op.child_count) {
-                    *success = false;
-                    return false;
-                }
-                int child_type;
-                for(int child_idx = 0; child_idx < root->op.child_count; child_idx++) {
-                    child_type = AR_EXP_GetResultType(root->op.children[child_idx]);
-                    if (!(child_type & param_types[child_idx])) {
-                        *success = false;
-                        return false;
-                    }
-                }
-            }
-        }        
-    } else {
-        return true;
     }
-    return *success;
 }
 
-bool AR_EXP_Validate(AR_ExpNode *root) {
-    bool success = true;
-    return _validate(root, &success);
+AR_EXP_ValidationResult AR_EXP_Validate(AR_ExpNode *root) {
+    AR_EXP_ValidationResult error;
+    error.error_type = AR_ERR_NO_ERROR;
+    _validate(root, &error);
+    return error;
 }

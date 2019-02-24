@@ -119,15 +119,13 @@ typedef struct {
  * This node can take one of two forms:
  * 1. OpNode
  * 2. OperandNode */
-struct AR_ExpNode {
+typedef struct AR_ExpNode {
     union {
         AR_OperandNode operand;
         AR_OpNode op;
     };
     AR_ExpNodeType type;
-};
-
-typedef struct AR_ExpNode AR_ExpNode;
+} AR_ExpNode;
 
 /* Return AR_OperandNodeType for operands and -1 for operations. */
 int AR_EXP_GetOperandType(AR_ExpNode *exp);
@@ -157,6 +155,35 @@ AR_ExpNode* AR_EXP_BuildFromAST(const AST *ast, const AST_ArithmeticExpressionNo
 void AR_EXP_Free(AR_ExpNode *root);
 
 int AR_EXP_GetResultType(AR_ExpNode *node);
-bool AR_EXP_Validate(AR_ExpNode *root);
+
+typedef enum {
+    AR_ERR_NO_ERROR,
+    AR_ERR_TYPE_MISMATCH,
+    AR_ERR_CARDINALITY
+} AR_ERRType;
+
+typedef struct {
+    size_t expected_param_count;
+    size_t actual_param_count;
+} AR_CardinalityError;
+
+typedef struct {
+    size_t erroneous_child_idx;
+    int possible_types;
+    int actual_types;
+} AR_TypeMismatchError;
+
+typedef struct {
+    AR_ExpNode *node;
+    union {
+        AR_CardinalityError cardinality;
+        AR_TypeMismatchError type_mismatch;
+    };
+    AR_ERRType error_type;
+} AR_EXP_ValidationResult;
+
+#define AR_ERR_VALID(err) ((err).error_type == AR_ERR_NO_ERROR)
+
+AR_EXP_ValidationResult AR_EXP_Validate(AR_ExpNode *root);
 
 #endif
