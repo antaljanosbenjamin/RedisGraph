@@ -13,7 +13,8 @@
 #include "agg_funcs.h"
 
 void Agg_GetFunc(const char* name, AggCtx** ctx);
+int Agg_GetResultType(const char* name);
 bool Agg_FuncExists(const char* name);
-int Agg_RegisterFunc(const char* name, AggFuncInit f);
+int Agg_RegisterFunc(const char* name, AggFuncInit f, int result_type);
 
 #endif

@@ -11,6 +11,7 @@
 typedef struct {
     const char *name;
     AggFuncInit func;
+    int result_type;
 } __aggFuncEntry;
 
 static Vector *__aggRegisteredFuncs = NULL;
@@ -21,11 +22,12 @@ static void __agg_initRegistry() {
     }
 }
 
-int Agg_RegisterFunc(const char* name, AggFuncInit f) {
+int Agg_RegisterFunc(const char* name, AggFuncInit f, int result_type) {
     __agg_initRegistry();
     __aggFuncEntry *e = rm_malloc(sizeof(__aggFuncEntry));
     e->name = name;
     e->func = f;
+    e->result_type = result_type;
     return Vector_Push(__aggRegisteredFuncs, e);
 }
 
@@ -44,10 +46,10 @@ bool Agg_FuncExists(const char* name) {
 }
 
 void Agg_GetFunc(const char* name, AggCtx** ctx) {
-     if (!__aggRegisteredFuncs) {
-         *ctx = NULL;
-         return;
-     }
+    if (!__aggRegisteredFuncs) {
+        *ctx = NULL;
+        return;
+    }
 
     for (int i = 0; i < Vector_Size(__aggRegisteredFuncs); i++) {
         __aggFuncEntry *e = NULL;
@@ -58,5 +60,20 @@ void Agg_GetFunc(const char* name, AggCtx** ctx) {
         }
     }
     *ctx = NULL;
+}
+
+int Agg_GetResultType(const char* name) {
+    if (!__aggRegisteredFuncs) {
+        return -1;
+    }
+
+    for (int i = 0; i < Vector_Size(__aggRegisteredFuncs); i++) {
+        __aggFuncEntry *e = NULL;
+        Vector_Get(__aggRegisteredFuncs, i, &e);
+        if (e != NULL && !strcasecmp(name, e->name)) {
+            return e->result_type;
+        }
+    }
+    return -1;
 }
 

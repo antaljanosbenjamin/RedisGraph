@@ -418,13 +418,13 @@ AggCtx* Agg_StdevPFunc() {
 //------------------------------------------------------------------------
 
 void Agg_RegisterFuncs() {
-    Agg_RegisterFunc("sum", Agg_SumFunc);
-    Agg_RegisterFunc("avg", Agg_AvgFunc);
-    Agg_RegisterFunc("max", Agg_MaxFunc);
-    Agg_RegisterFunc("min", Agg_MinFunc);
-    Agg_RegisterFunc("count", Agg_CountFunc);
-    Agg_RegisterFunc("percentileDisc", Agg_PercDiscFunc);
-    Agg_RegisterFunc("percentileCont", Agg_PercContFunc);
-    Agg_RegisterFunc("stDev", Agg_StdevFunc);
-    Agg_RegisterFunc("stDevP", Agg_StdevPFunc);
+    Agg_RegisterFunc("sum", Agg_SumFunc, SI_NUMERIC);
+    Agg_RegisterFunc("avg", Agg_AvgFunc, SI_NUMERIC);
+    Agg_RegisterFunc("max", Agg_MaxFunc, SI_ANY_TYPE);
+    Agg_RegisterFunc("min", Agg_MinFunc, SI_ANY_TYPE);
+    Agg_RegisterFunc("count", Agg_CountFunc, SI_NUMERIC);
+    Agg_RegisterFunc("percentileDisc", Agg_PercDiscFunc, SI_NUMERIC);
+    Agg_RegisterFunc("percentileCont", Agg_PercContFunc, SI_NUMERIC);
+    Agg_RegisterFunc("stDev", Agg_StdevFunc, SI_NUMERIC);
+    Agg_RegisterFunc("stDevP", Agg_StdevPFunc, SI_NUMERIC);
 }
